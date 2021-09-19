@@ -32,12 +32,13 @@ import com.example.cupcake.model.OrderViewModel
  */
 class SummaryFragment : Fragment() {
 
-    private val sharedViewModel: OrderViewModel by activityViewModels()
-
     // Binding object instance corresponding to the fragment_summary.xml layout
     // This property is non-null between the onCreateView() and onDestroyView() lifecycle callbacks,
     // when the view hierarchy is attached to the fragment.
     private var binding: FragmentSummaryBinding? = null
+
+    // Use the 'by activityViewModels()' Kotlin property delegate from the fragment-ktx artifact
+    private val sharedViewModel: OrderViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -62,8 +63,8 @@ class SummaryFragment : Fragment() {
      * Submit the order by sharing out the order details to another app via an implicit intent.
      */
     fun sendOrder() {
+        // Construct the order summary text with information from the view model
         val numberOfCupcakes = sharedViewModel.quantity.value ?: 0
-
         val orderSummary = getString(
             R.string.order_details,
             resources.getQuantityString(R.plurals.cupcakes, numberOfCupcakes, numberOfCupcakes),
@@ -72,19 +73,26 @@ class SummaryFragment : Fragment() {
             sharedViewModel.price.value.toString()
         )
 
+        // Create an ACTION_SEND implicit intent with order details in the intent extras
         val intent = Intent(Intent.ACTION_SEND)
             .setType("text/plain")
             .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.new_cupcake_order))
             .putExtra(Intent.EXTRA_TEXT, orderSummary)
 
+        // Check if there's an app that can handle this intent before launching it
         if (activity?.packageManager?.resolveActivity(intent, 0) != null) {
+            // Start a new activity with the given intent (this may open the share dialog on a
+            // device if multiple apps can handle this intent)
             startActivity(intent)
         }
 
     }
 
     fun cancelOrder() {
+        // Reset order in view model
         sharedViewModel.resetOrder()
+
+        // Navigate back to the [StartFragment] to start over
         findNavController().navigate(R.id.action_summaryFragment_to_startFragment)
     }
 
